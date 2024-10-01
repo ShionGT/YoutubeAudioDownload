@@ -1,10 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from pytube import YouTube
-import os
+import yt_dlp
 
-
-# Function to download YouTube audio
+# Function to download YouTube audio using yt-dlp
 def download_audio():
     url = url_entry.get()
     download_path = path_entry.get()
@@ -17,24 +15,23 @@ def download_audio():
         return
 
     try:
-        # Create YouTube object
-        yt = YouTube(url)
+        # Options for yt-dlp to download only audio in mp3 format
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': f'{download_path}/%(title)s.%(ext)s',
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
 
-        # Select the highest quality audio stream using an alternative method
-        audio_stream = yt.streams.get_audio_only()
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
 
-        # Download audio stream
-        downloaded_file = audio_stream.download(output_path=download_path)
-
-        # Rename file to .mp3
-        base, ext = os.path.splitext(downloaded_file)
-        new_file = base + '.mp3'
-        os.rename(downloaded_file, new_file)
-
-        messagebox.showinfo("Success", f"Audio has been downloaded and saved as {new_file}")
+        messagebox.showinfo("Success", f"Audio has been successfully downloaded to {download_path}")
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
-
 
 # Function to browse and select download path
 def browse_path():
@@ -42,7 +39,6 @@ def browse_path():
     if selected_path:
         path_entry.delete(0, tk.END)
         path_entry.insert(0, selected_path)
-
 
 # Create main application window
 app = tk.Tk()
